@@ -18,8 +18,9 @@ CORS(app, resources={r"/api/": {"origins": "0.0.0.0"}})
 
 
 @app.teardown_appcontext
-def close(cls):
-    """close"""
+def teardown_flask(exception):
+    '''The Flask app/request context end event listener.'''
+    # print(exception)
     storage.close()
 
 
@@ -28,7 +29,20 @@ def not_found(e):
     """error 404"""
     return jsonify({"error": "Not found"}), 404
 
+@app.errorhandler(400)
+def error_400(error):
+    '''Handles the 400 HTTP error code.'''
+    msg = 'Bad request'
+    if isinstance(error, Exception) and hasattr(error, 'description'):
+        msg = error.description
+    return jsonify(error=msg), 400
+
 
 if __name__ == '__main__':
-    """Initialize api"""
-    app.run(host=host, port=int(port), threaded=True)
+    app_host = os.getenv('HBNB_API_HOST', '0.0.0.0')
+    app_port = int(os.getenv('HBNB_API_PORT', '5000'))
+    app.run(
+        host=app_host,
+        port=app_port,
+        threaded=True
+    )
